@@ -1,0 +1,32 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+venv/
+.venv/
+
+# Local data — NEVER commit patient data
+*.db
+*.wav
+*.m4a
+*.mp3
+*.pdf
+
+# Enrollment data (therapist voice embeddings)
+enrollment/
+
+# Model weights
+models/
+
+# Environment
+.env
+*.env
+
+# macOS
+.DS_Store
+
+# IDE
+.vscode/
+.idea/

@@ -1,0 +1,1084 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Session Notes — Clinical Note Taker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f4f2ee;
+  --bg-warm: #eae7e0;
+  --surface: #ffffff;
+  --surface-elevated: #ffffff;
+  --border: #d8d4cc;
+  --border-light: #e8e5de;
+  --text: #2c2a26;
+  --text-secondary: #6b675e;
+  --text-tertiary: #9b9789;
+  --accent: #3d6b5e;
+  --accent-light: #4a7f70;
+  --accent-bg: #e8f0ed;
+  --accent-border: #b8d4ca;
+  --recording: #b44040;
+  --recording-bg: #fdf0f0;
+  --recording-pulse: #d45454;
+  --therapist: #3d6b5e;
+  --patient: #5a6b8a;
+  --thumbs-up: #4a8c6f;
+  --thumbs-down: #8c6b4a;
+  --shadow-sm: 0 1px 2px rgba(44,42,38,0.04), 0 1px 4px rgba(44,42,38,0.03);
+  --shadow-md: 0 2px 8px rgba(44,42,38,0.06), 0 1px 3px rgba(44,42,38,0.04);
+  --shadow-lg: 0 4px 16px rgba(44,42,38,0.08), 0 2px 6px rgba(44,42,38,0.04);
+  --radius: 8px;
+  --radius-lg: 12px;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  height: 100vh;
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* LAYOUT */
+.app {
+  display: grid;
+  grid-template-columns: 272px 1fr;
+  height: 100vh;
+}
+
+/* SIDEBAR */
+.sidebar {
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.sidebar-header {
+  padding: 20px 20px 0;
+}
+
+.app-title {
+  font-family: 'Source Serif 4', serif;
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--text);
+  letter-spacing: -0.01em;
+}
+
+.app-subtitle {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  margin-top: 2px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  font-weight: 500;
+}
+
+/* ENROLLMENT */
+.enrollment {
+  margin: 16px 14px 0;
+  padding: 14px;
+  background: var(--accent-bg);
+  border: 1px solid var(--accent-border);
+  border-radius: var(--radius);
+}
+
+.enrollment-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.enrollment-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+  flex-shrink: 0;
+}
+
+.enrollment-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.enrollment-name {
+  font-family: 'Source Serif 4', serif;
+  font-size: 15px;
+  font-weight: 500;
+  margin-top: 6px;
+  color: var(--text);
+}
+
+.enrollment-meta {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  margin-top: 2px;
+}
+
+/* SESSION LIST */
+.session-list-header {
+  padding: 20px 20px 10px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-tertiary);
+  font-weight: 600;
+}
+
+.session-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 10px 14px;
+}
+
+.session-item {
+  padding: 10px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  margin-bottom: 2px;
+}
+
+.session-item:hover {
+  background: var(--bg);
+}
+
+.session-item.active {
+  background: var(--accent-bg);
+  border: 1px solid var(--accent-border);
+}
+
+.session-item:not(.active) {
+  border: 1px solid transparent;
+}
+
+.session-item-id {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--text-tertiary);
+  font-weight: 500;
+}
+
+.session-item-date {
+  font-size: 13px;
+  font-weight: 500;
+  margin-top: 1px;
+  color: var(--text);
+}
+
+.session-item-duration {
+  font-size: 11px;
+  color: var(--text-secondary);
+  margin-top: 1px;
+}
+
+.session-item-status {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 2px 6px;
+  border-radius: 3px;
+  margin-top: 4px;
+}
+
+.status-summarized {
+  background: var(--accent-bg);
+  color: var(--accent);
+}
+
+.status-transcribed {
+  background: #f0ece4;
+  color: #8a7d5a;
+}
+
+/* SIDEBAR FOOTER */
+.sidebar-footer {
+  padding: 14px;
+  border-top: 1px solid var(--border-light);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.privacy-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--text-tertiary);
+  font-weight: 500;
+}
+
+.privacy-badge svg {
+  width: 14px;
+  height: 14px;
+  color: var(--accent);
+}
+
+/* MAIN AREA */
+.main {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--bg);
+}
+
+/* TOOLBAR */
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 24px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.btn {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px 16px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--surface);
+  color: var(--text);
+}
+
+.btn:hover {
+  background: var(--bg);
+  border-color: #c8c4bc;
+}
+
+.btn-record {
+  background: var(--accent);
+  color: white;
+  border-color: var(--accent);
+  padding: 8px 20px;
+}
+
+.btn-record:hover {
+  background: var(--accent-light);
+  border-color: var(--accent-light);
+}
+
+.btn-record.recording {
+  background: var(--recording);
+  border-color: var(--recording);
+  animation: record-pulse 2s ease-in-out infinite;
+}
+
+@keyframes record-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(180,64,64,0.2); }
+  50% { box-shadow: 0 0 0 8px rgba(180,64,64,0); }
+}
+
+.btn-record svg circle { transition: all 0.2s ease; }
+.btn-record.recording svg circle { rx: 3; ry: 3; }
+
+.btn-process {
+  background: var(--accent-bg);
+  color: var(--accent);
+  border-color: var(--accent-border);
+}
+
+.btn-process:hover {
+  background: #dce9e4;
+}
+
+.btn-process:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.toolbar-separator {
+  width: 1px;
+  height: 24px;
+  background: var(--border);
+}
+
+.word-target {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.word-target input {
+  width: 48px;
+  padding: 4px 6px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  text-align: center;
+  background: var(--surface);
+  color: var(--text);
+}
+
+/* WAVEFORM */
+.waveform-container {
+  height: 0;
+  overflow: hidden;
+  background: var(--recording-bg);
+  border-bottom: 1px solid #e8d4d4;
+  transition: height 0.3s ease;
+  flex-shrink: 0;
+}
+
+.waveform-container.active {
+  height: 72px;
+}
+
+.waveform {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  gap: 2px;
+  padding: 0 24px;
+}
+
+.waveform-bar {
+  width: 3px;
+  border-radius: 2px;
+  background: var(--recording);
+  opacity: 0.6;
+  transition: height 0.1s ease;
+}
+
+.waveform-timer {
+  position: absolute;
+  right: 36px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  color: var(--recording);
+  font-weight: 500;
+}
+
+.waveform-inner {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  width: 100%;
+  gap: 2px;
+}
+
+/* CONTENT */
+.content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* PROCESSING STATE */
+.processing-overlay {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 60px 20px;
+}
+
+.processing-overlay.active {
+  display: flex;
+}
+
+.processing-spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.processing-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.processing-step {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.processing-step.done { color: var(--accent); }
+.processing-step.active { color: var(--text); font-weight: 500; }
+.processing-step.pending { color: var(--text-tertiary); }
+
+.step-icon {
+  width: 18px;
+  text-align: center;
+  font-size: 12px;
+}
+
+/* TRANSCRIPT */
+.section {
+  background: var(--surface);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.section-title {
+  font-family: 'Source Serif 4', serif;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.section-badge {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.transcript {
+  max-height: 380px;
+  overflow-y: auto;
+  padding: 6px 0;
+}
+
+.transcript-line {
+  display: flex;
+  gap: 12px;
+  padding: 8px 18px;
+  transition: background 0.1s ease;
+}
+
+.transcript-line:hover {
+  background: var(--bg);
+}
+
+.transcript-timestamp {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--text-tertiary);
+  flex-shrink: 0;
+  width: 42px;
+  padding-top: 2px;
+}
+
+.transcript-speaker {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  flex-shrink: 0;
+  width: 72px;
+  padding-top: 2px;
+}
+
+.speaker-therapist { color: var(--therapist); }
+.speaker-patient { color: var(--patient); }
+
+.transcript-text {
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--text);
+}
+
+/* DAP SUMMARY */
+.summary-content {
+  padding: 18px;
+}
+
+.dap-section {
+  margin-bottom: 14px;
+}
+
+.dap-section:last-child { margin-bottom: 0; }
+
+.dap-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--accent);
+  margin-bottom: 4px;
+}
+
+.dap-text {
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--text);
+}
+
+.summary-editable {
+  border: none;
+  outline: none;
+  width: 100%;
+  resize: none;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--text);
+  background: transparent;
+}
+
+/* BOTTOM BAR */
+.bottom-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 24px;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.feedback {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.feedback-label {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.feedback-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  cursor: pointer;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.feedback-btn:hover {
+  background: var(--bg);
+  transform: scale(1.08);
+}
+
+.feedback-btn.selected-up {
+  background: #e8f5ee;
+  border-color: var(--thumbs-up);
+  transform: scale(1.08);
+}
+
+.feedback-btn.selected-down {
+  background: #f5ede8;
+  border-color: var(--thumbs-down);
+  transform: scale(1.08);
+}
+
+.feedback-toast {
+  font-size: 12px;
+  color: var(--accent);
+  font-weight: 500;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.feedback-toast.show { opacity: 1; }
+
+.bottom-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.btn-export {
+  background: var(--surface);
+}
+
+.btn-export svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* STATUS BAR */
+.status-bar {
+  padding: 6px 24px;
+  font-size: 11px;
+  color: var(--text-tertiary);
+  background: var(--bg-warm);
+  border-top: 1px solid var(--border-light);
+  display: flex;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+
+/* SCROLLBAR */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #c0bbb2; }
+
+/* ANIMATIONS */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.content .section {
+  animation: fadeIn 0.35s ease both;
+}
+
+.content .section:nth-child(2) {
+  animation-delay: 0.08s;
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sidebar-header">
+      <div class="app-title">Session Notes</div>
+      <div class="app-subtitle">Clinical Note Taker</div>
+    </div>
+
+    <div class="enrollment">
+      <div class="enrollment-status">
+        <div class="enrollment-dot"></div>
+        <div class="enrollment-label">Voice Enrolled</div>
+      </div>
+      <div class="enrollment-name">Olivia</div>
+      <div class="enrollment-meta">Enrolled Mar 9, 2026 · Therapist</div>
+    </div>
+
+    <div class="session-list-header">Sessions</div>
+    <div class="session-list">
+      <div class="session-item active" onclick="selectSession(this, 0)">
+        <div class="session-item-id">#001</div>
+        <div class="session-item-date">Mar 9, 2026 · Fake Session</div>
+        <div class="session-item-duration">2.0 min · Dave</div>
+        <div class="session-item-status status-summarized">Summarized</div>
+      </div>
+    </div>
+
+    <div class="sidebar-footer">
+      <div class="privacy-badge">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        Local only · HIPAA compliant
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+    <div class="toolbar">
+      <button class="btn btn-record" id="recordBtn" onclick="toggleRecording()">
+        <svg width="14" height="14" viewBox="0 0 14 14"><circle cx="7" cy="7" r="5" fill="currentColor"/></svg>
+        <span id="recordLabel">Record Session</span>
+      </button>
+
+      <button class="btn" onclick="loadFile()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        Load File
+      </button>
+
+      <button class="btn btn-process" id="processBtn" onclick="simulateProcessing()" disabled>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        Process
+      </button>
+
+      <div class="toolbar-separator"></div>
+
+      <div class="word-target">
+        Summary words:
+        <input type="number" value="75" min="50" max="100" step="5">
+      </div>
+    </div>
+
+    <!-- WAVEFORM -->
+    <div class="waveform-container" id="waveform">
+      <div class="waveform-inner">
+        <div class="waveform" id="waveformBars"></div>
+        <div class="waveform-timer" id="waveformTimer">00:00</div>
+      </div>
+    </div>
+
+    <!-- PROCESSING -->
+    <div class="processing-overlay" id="processingOverlay">
+      <div class="processing-spinner"></div>
+      <div class="processing-steps">
+        <div class="processing-step" id="step0"><span class="step-icon">○</span> Converting audio</div>
+        <div class="processing-step" id="step1"><span class="step-icon">○</span> Speaker diarization</div>
+        <div class="processing-step" id="step2"><span class="step-icon">○</span> Transcribing audio</div>
+        <div class="processing-step" id="step3"><span class="step-icon">○</span> Generating DAP summary</div>
+      </div>
+    </div>
+
+    <!-- CONTENT -->
+    <div class="content" id="mainContent">
+      <!-- TRANSCRIPT -->
+      <div class="section">
+        <div class="section-header">
+          <div class="section-title">Session Transcript</div>
+          <div class="section-badge">2:02 · 2 speakers · from Fake-therapy-session.m4a</div>
+        </div>
+        <div class="transcript" id="transcript">
+          <div class="transcript-line">
+            <div class="transcript-timestamp">00:00</div>
+            <div class="transcript-speaker speaker-patient">Patient</div>
+            <div class="transcript-text">Hey Olivia, it's me again. Could you step a little closer to the laptop?</div>
+          </div>
+          <div class="transcript-line">
+            <div class="transcript-timestamp">00:05</div>
+            <div class="transcript-speaker speaker-therapist">Olivia</div>
+            <div class="transcript-text">Yes, how are you doing today?</div>
+          </div>
+          <div class="transcript-line">
+            <div class="transcript-timestamp">00:07</div>
+            <div class="transcript-speaker speaker-patient">Patient</div>
+            <div class="transcript-text">It's been bad. I feel like I'm just spending all my time thinking about AI.</div>
+          </div>
+          <div class="transcript-line">
+            <div class="transcript-timestamp">00:12</div>
+            <div class="transcript-speaker speaker-therapist">Olivia</div>
+            <div class="transcript-text">That makes a lot of sense. Tell me more about how you're feeling.</div>
+          </div>
+          <div class="transcript-line">
+            <div class="transcript-timestamp">00:16</div>
+            <div class="transcript-speaker speaker-patient">Patient</div>
+            <div class="transcript-text">I'm feeling very self-conscious. I feel as awkward as someone would if they were called out in front of their peers to pretend to be a therapist.</div>
+          </div>
+          <div class="transcript-line">
+            <div class="transcript-timestamp">00:23</div>
+            <div class="transcript-speaker speaker-therapist">Olivia</div>
+            <div class="transcript-text">I know exactly how you feel.</div>
+          </div>
+          <div class="transcript-line">
+            <div class="transcript-timestamp">00:26</div>
+            <div class="transcript-speaker speaker-therapist">Olivia</div>
+            <div class="transcript-text">And that is very hard. But I want to know more about why you feel self-conscious.</div>
+          </div>
+          <div class="transcript-line">
+            <div class="transcript-timestamp">00:35</div>
+            <div class="transcript-speaker speaker-patient">Patient</div>
+            <div class="transcript-text">That's a really good question. I can see why you make the big bucks.</div>
+          </div>
+          <div class="transcript-line">
+            <div class="transcript-timestamp">00:38</div>
+            <div class="transcript-speaker speaker-patient">Patient</div>
+            <div class="transcript-text">I have been really worried about how this is going to affect my ability to relate to my children who are not as smart as the AIs I work with.</div>
+          </div>
+          <div class="transcript-line">
+            <div class="transcript-timestamp">00:48</div>
+            <div class="transcript-speaker speaker-therapist">Olivia</div>
+            <div class="transcript-text">How many children do you have?</div>
+          </div>
+          <div class="transcript-line">
+            <div class="transcript-timestamp">00:49</div>
+            <div class="transcript-speaker speaker-patient">Patient</div>
+            <div class="transcript-text">I have four children.</div>
+          </div>
+          <div class="transcript-line">
+            <div class="transcript-timestamp">00:51</div>
+            <div class="transcript-speaker speaker-therapist">Olivia</div>
+            <div class="transcript-text">And what are their ages?</div>
+          </div>
+          <div class="transcript-line">
+            <div class="transcript-timestamp">00:53</div>
+            <div class="transcript-speaker speaker-patient">Patient</div>
+            <div class="transcript-text">That's a great question as well.</div>
+          </div>
+          <div class="transcript-line">
+            <div class="transcript-timestamp">00:55</div>
+            <div class="transcript-speaker speaker-patient">Patient</div>
+            <div class="transcript-text">They're 17, 13, 12, and 10.</div>
+          </div>
+          <div class="transcript-line">
+            <div class="transcript-timestamp">00:59</div>
+            <div class="transcript-speaker speaker-therapist">Olivia</div>
+            <div class="transcript-text">Okay. That makes a lot of sense because they're in the developmental phase. They're teenagers, right?</div>
+          </div>
+          <div class="transcript-line">
+            <div class="transcript-timestamp">01:05</div>
+            <div class="transcript-speaker speaker-therapist">Olivia</div>
+            <div class="transcript-text">And so you want to develop a strong relationship with them as well. What's their relationship with AI?</div>
+          </div>
+          <div class="transcript-line">
+            <div class="transcript-timestamp">01:12</div>
+            <div class="transcript-speaker speaker-patient">Patient</div>
+            <div class="transcript-text">They think it's really fun. They've been making a lot of vibe-coded video games.</div>
+          </div>
+          <div class="transcript-line">
+            <div class="transcript-timestamp">01:16</div>
+            <div class="transcript-speaker speaker-patient">Patient</div>
+            <div class="transcript-text">And some of them are pretty great. Most of them aren't though. And I think that's been affecting my sleep.</div>
+          </div>
+          <div class="transcript-line">
+            <div class="transcript-timestamp">01:21</div>
+            <div class="transcript-speaker speaker-therapist">Olivia</div>
+            <div class="transcript-text">Sorry, that was unprofessional.</div>
+          </div>
+          <div class="transcript-line">
+            <div class="transcript-timestamp">01:25</div>
+            <div class="transcript-speaker speaker-therapist">Olivia</div>
+            <div class="transcript-text">So do you worry about their relationship with AI being negative at all?</div>
+          </div>
+          <div class="transcript-line">
+            <div class="transcript-timestamp">01:34</div>
+            <div class="transcript-speaker speaker-patient">Patient</div>
+            <div class="transcript-text">I think so. I mean, just in the ways I worry about it for all students. I worry that AI can become a crutch for social interaction where kids will talk to their AIs instead of talking to their roommates or friends.</div>
+          </div>
+          <div class="transcript-line">
+            <div class="transcript-timestamp">01:47</div>
+            <div class="transcript-speaker speaker-patient">Patient</div>
+            <div class="transcript-text">But, you know, it's not specific to my children.</div>
+          </div>
+          <div class="transcript-line">
+            <div class="transcript-timestamp">01:50</div>
+            <div class="transcript-speaker speaker-therapist">Olivia</div>
+            <div class="transcript-text">And how would you say your relationship with AI is?</div>
+          </div>
+          <div class="transcript-line">
+            <div class="transcript-timestamp">01:53</div>
+            <div class="transcript-speaker speaker-patient">Patient</div>
+            <div class="transcript-text">I'd say it's pretty good.</div>
+          </div>
+          <div class="transcript-line">
+            <div class="transcript-timestamp">01:54</div>
+            <div class="transcript-speaker speaker-patient">Patient</div>
+            <div class="transcript-text">It's pretty good. Like, it knows who's in charge. It knows it's not alive. And it's very good at predicting the next token.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- DAP SUMMARY -->
+      <div class="section">
+        <div class="section-header">
+          <div class="section-title">DAP Summary</div>
+          <div class="section-badge">~85 words · editable</div>
+        </div>
+        <div class="summary-content">
+          <div class="dap-section">
+            <div class="dap-label">Data</div>
+            <div class="dap-text">Patient reports preoccupation with AI and its impact on daily life. Expresses self-consciousness and feelings of awkwardness. Reports concern about ability to relate to his four children (ages 17, 13, 12, 10) compared to the AI systems he works with. Notes children are actively using AI to create video games. Patient reports sleep disturbance. States his relationship with AI is "pretty good" and maintains clear boundaries.</div>
+          </div>
+          <div class="dap-section">
+            <div class="dap-label">Assessment</div>
+            <div class="dap-text">Patient demonstrates anxiety related to AI's role in family dynamics and parenting. Concern about children using AI as social crutch suggests broader worry about technology's developmental impact. Uses humor as a deflection mechanism. Self-awareness is present but accompanied by minimization. Sleep disruption warrants further exploration.</div>
+          </div>
+          <div class="dap-section">
+            <div class="dap-label">Plan</div>
+            <div class="dap-text">Explore parenting-specific anxieties around technology in next session. Assess sleep patterns and potential link to AI-related rumination. Introduce structured family engagement activities that don't involve screens. Monitor self-consciousness in social settings.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- BOTTOM BAR -->
+    <div class="bottom-bar">
+      <div class="feedback">
+        <span class="feedback-label">Was this summary helpful?</span>
+        <button class="feedback-btn" id="thumbsUp" onclick="giveFeedback('up')">👍</button>
+        <button class="feedback-btn" id="thumbsDown" onclick="giveFeedback('down')">👎</button>
+        <span class="feedback-toast" id="feedbackToast">Feedback recorded — thank you</span>
+      </div>
+      <div class="bottom-actions">
+        <button class="btn btn-export" onclick="exportPDF()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Export PDF
+        </button>
+      </div>
+    </div>
+
+    <div class="status-bar">
+      <span id="statusText">Session #001 · Fake-therapy-session.m4a · Processed successfully</span>
+      <span>v0.1.0 · All data stored locally</span>
+    </div>
+  </div>
+</div>
+
+<script>
+// State
+let isRecording = false;
+let recordingInterval = null;
+let recordingSeconds = 0;
+let waveformAnimFrame = null;
+
+// Generate waveform bars
+const barsContainer = document.getElementById('waveformBars');
+const NUM_BARS = 80;
+for (let i = 0; i < NUM_BARS; i++) {
+  const bar = document.createElement('div');
+  bar.className = 'waveform-bar';
+  bar.style.height = '4px';
+  barsContainer.appendChild(bar);
+}
+
+function toggleRecording() {
+  const btn = document.getElementById('recordBtn');
+  const label = document.getElementById('recordLabel');
+  const waveform = document.getElementById('waveform');
+  const processBtn = document.getElementById('processBtn');
+
+  isRecording = !isRecording;
+
+  if (isRecording) {
+    btn.classList.add('recording');
+    label.textContent = 'Stop Recording';
+    waveform.classList.add('active');
+    processBtn.disabled = true;
+    recordingSeconds = 0;
+    updateTimer();
+    recordingInterval = setInterval(() => {
+      recordingSeconds++;
+      updateTimer();
+    }, 1000);
+    animateWaveform();
+    document.getElementById('statusText').textContent = 'Recording session...';
+  } else {
+    btn.classList.remove('recording');
+    label.textContent = 'Record Session';
+    waveform.classList.remove('active');
+    processBtn.disabled = false;
+    clearInterval(recordingInterval);
+    cancelAnimationFrame(waveformAnimFrame);
+    document.getElementById('statusText').textContent = `Recorded ${recordingSeconds}s — ready to process`;
+  }
+}
+
+function updateTimer() {
+  const mins = String(Math.floor(recordingSeconds / 60)).padStart(2, '0');
+  const secs = String(recordingSeconds % 60).padStart(2, '0');
+  document.getElementById('waveformTimer').textContent = `${mins}:${secs}`;
+}
+
+function animateWaveform() {
+  const bars = barsContainer.children;
+  const time = Date.now() / 1000;
+  for (let i = 0; i < bars.length; i++) {
+    const h = 4 + Math.abs(Math.sin(time * 3 + i * 0.3) * 28) +
+              Math.abs(Math.sin(time * 1.7 + i * 0.5) * 12) +
+              Math.random() * 6;
+    bars[i].style.height = h + 'px';
+  }
+  if (isRecording) {
+    waveformAnimFrame = requestAnimationFrame(animateWaveform);
+  }
+}
+
+function loadFile() {
+  document.getElementById('processBtn').disabled = false;
+  document.getElementById('statusText').textContent = 'Loaded: Fake-therapy-session.m4a';
+}
+
+function simulateProcessing() {
+  const overlay = document.getElementById('processingOverlay');
+  const content = document.getElementById('mainContent');
+  const processBtn = document.getElementById('processBtn');
+
+  content.style.display = 'none';
+  overlay.classList.add('active');
+  processBtn.disabled = true;
+  document.getElementById('statusText').textContent = 'Processing — this may take a while...';
+
+  const steps = ['step0', 'step1', 'step2', 'step3'];
+  let current = 0;
+
+  function advanceStep() {
+    if (current > 0) {
+      const prev = document.getElementById(steps[current - 1]);
+      prev.classList.remove('active');
+      prev.classList.add('done');
+      prev.querySelector('.step-icon').textContent = '✓';
+    }
+    if (current < steps.length) {
+      const step = document.getElementById(steps[current]);
+      step.classList.add('active');
+      step.querySelector('.step-icon').textContent = '◉';
+      current++;
+      setTimeout(advanceStep, 800 + Math.random() * 600);
+    } else {
+      setTimeout(() => {
+        overlay.classList.remove('active');
+        content.style.display = 'flex';
+        document.getElementById('statusText').textContent = 'Session #003 · Processed successfully';
+        // Reset steps for next time
+        steps.forEach(id => {
+          const el = document.getElementById(id);
+          el.classList.remove('done', 'active');
+          el.querySelector('.step-icon').textContent = '○';
+        });
+      }, 500);
+    }
+  }
+
+  advanceStep();
+}
+
+function giveFeedback(type) {
+  const up = document.getElementById('thumbsUp');
+  const down = document.getElementById('thumbsDown');
+  const toast = document.getElementById('feedbackToast');
+
+  up.classList.remove('selected-up');
+  down.classList.remove('selected-down');
+
+  if (type === 'up') up.classList.add('selected-up');
+  else down.classList.add('selected-down');
+
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 2000);
+}
+
+function selectSession(el, idx) {
+  document.querySelectorAll('.session-item').forEach(s => s.classList.remove('active'));
+  el.classList.add('active');
+}
+
+function exportPDF() {
+  document.getElementById('statusText').textContent = 'Exported to ~/.note-taker-for-mom/exports/session_001_20260309.pdf';
+  setTimeout(() => {
+    alert('PDF exported to:\n~/.note-taker-for-mom/exports/session_001_20260309.pdf');
+  }, 100);
+}
+</script>
+</body>
+</html>
