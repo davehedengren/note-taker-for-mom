@@ -19,24 +19,31 @@ META_PATH = ENROLLMENT_DIR / "therapist_meta.json"
 
 
 def get_hf_token() -> str:
-    """Load Hugging Face token from .env or environment."""
-    # Check environment first
-    token = os.environ.get("HUGGING_FACE_API_KEY") or os.environ.get("HF_TOKEN")
+    """Load Hugging Face token from environment or .env files."""
+    # Check environment first (set by Start.command launcher)
+    token = os.environ.get("HF_TOKEN") or os.environ.get("HUGGING_FACE_API_KEY")
     if token:
         return token
 
-    # Try loading from .env file in the project directory
-    env_path = Path(__file__).parent / ".env"
-    if env_path.exists():
-        for line in env_path.read_text().splitlines():
-            line = line.strip()
-            if line.startswith("HUGGING_FACE_API_KEY="):
-                return line.split("=", 1)[1].strip()
-            if line.startswith("HF_TOKEN="):
-                return line.split("=", 1)[1].strip()
+    # Try .env files in multiple locations
+    search_paths = [
+        Path(__file__).parent / ".env",           # project directory
+        Path.home() / ".note-taker-for-mom" / ".env",  # user data directory
+    ]
+
+    for env_path in search_paths:
+        if env_path.exists():
+            for line in env_path.read_text().splitlines():
+                line = line.strip()
+                if not line or line.startswith("#"):
+                    continue
+                for key in ("HF_TOKEN", "HUGGING_FACE_API_KEY"):
+                    if line.startswith(f"{key}="):
+                        return line.split("=", 1)[1].strip()
 
     raise EnvironmentError(
-        "No Hugging Face token found. Set HUGGING_FACE_API_KEY in .env or environment."
+        "No Hugging Face token found.\n"
+        "Add HUGGING_FACE_API_KEY=hf_... to the .env file in the app folder."
     )
 
 

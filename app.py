@@ -380,6 +380,15 @@ def main():
     init_db()
     app = QApplication(sys.argv)
     app.setStyle("Fusion")
+
+    # First-run: download models if needed
+    from first_run_setup import needs_setup, SetupDialog
+    if needs_setup():
+        dialog = SetupDialog()
+        result = dialog.exec()
+        if result != SetupDialog.DialogCode.Accepted:
+            sys.exit(0)
+
     window = MainWindow()
     window.show()
     sys.exit(app.exec())
